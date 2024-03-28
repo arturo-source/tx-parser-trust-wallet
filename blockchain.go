@@ -7,7 +7,17 @@ import (
 	"strings"
 )
 
-type Blockchain struct{}
+type Blockchain struct {
+	LastBlockNum int
+	Suscribers   map[string]bool
+}
+
+func newBlockchain() *Blockchain {
+	return &Blockchain{
+		LastBlockNum: 0,
+		Suscribers:   make(map[string]bool),
+	}
+}
 
 func hexToDec(hex string) int {
 	numStr := strings.TrimPrefix(hex, "0x")
@@ -20,7 +30,7 @@ func hexToDec(hex string) int {
 	return int(num)
 }
 
-func (b Blockchain) GetCurrentBlock() int {
+func (b *Blockchain) GetCurrentBlock() int {
 	data := RPCRequest{
 		Jsonrpc: "2.0",
 		Method:  "eth_getBlockByNumber",
@@ -35,5 +45,15 @@ func (b Blockchain) GetCurrentBlock() int {
 	}
 
 	num := hexToDec(respData.Result.Number)
-	return int(num)
+	b.LastBlockNum = num
+	return num
+}
+
+func (b *Blockchain) Subscribe(address string) bool {
+	if _, ok := b.Suscribers[address]; ok {
+		return false
+	}
+
+	b.Suscribers[address] = true
+	return true
 }
