@@ -12,7 +12,11 @@ func main() {
 	port := flag.String("port", "8080", "port to listen on")
 	flag.Parse()
 
-	blockchain := newBlockchain()
+	blockchain, err := newBlockchain()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating blockchain: %s\n", err)
+		os.Exit(1)
+	}
 
 	http.HandleFunc("/getCurrentBlock", func(w http.ResponseWriter, r *http.Request) {
 		blockNum := blockchain.GetCurrentBlock()

@@ -11,14 +11,19 @@ type Blockchain struct {
 	Subscribers  map[string][]Transaction
 }
 
-func newBlockchain() Parser {
-	b := &Blockchain{
-		LastBlockNum: 0,
-		Subscribers:  make(map[string][]Transaction),
+func newBlockchain() (Parser, error) {
+	b := &Blockchain{}
+
+	lastBlockNum, err := getLatestBlock()
+	if err != nil {
+		return b, fmt.Errorf("error getting latest block: %s", err)
 	}
 
+	b.LastBlockNum = lastBlockNum
+	b.Subscribers = make(map[string][]Transaction)
 	go b.backgroundListening()
-	return b
+
+	return b, nil
 }
 
 func (b *Blockchain) backgroundListening() {
