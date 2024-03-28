@@ -11,6 +11,7 @@ import (
 
 const RPC_URL = "https://cloudflare-eth.com"
 
+// from https://ethereum.org/en/developers/docs/apis/json-rpc/
 type RPCRequest struct {
 	Jsonrpc string `json:"jsonrpc"`
 	Method  string `json:"method"`
@@ -18,6 +19,8 @@ type RPCRequest struct {
 	ID      int    `json:"id"`
 }
 
+// Block is the response from the RPC
+// I created this struct from the response with that tool https://mholt.github.io/json-to-go/
 type Block struct {
 	Jsonrpc string `json:"jsonrpc"`
 	Result  struct {
@@ -56,7 +59,7 @@ type Block struct {
 	ID int `json:"id"`
 }
 
-// https://ethereum.org/en/developers/docs/transactions/
+// from https://ethereum.org/en/developers/docs/transactions/
 type Transaction struct {
 	From                 string `json:"from"`
 	To                   string `json:"to"`
@@ -67,6 +70,7 @@ type Transaction struct {
 	Value                string `json:"value"`
 }
 
+// doRequest sends a POST request to the RPC_URL
 func doRequest(data RPCRequest) (Block, error) {
 	var block Block
 
@@ -96,6 +100,7 @@ func doRequest(data RPCRequest) (Block, error) {
 	return block, nil
 }
 
+// hexToDec converts a hexadecimal number to decimal
 func hexToDec(hex string) (int, error) {
 	numStr := strings.TrimPrefix(hex, "0x")
 	num, err := strconv.ParseInt(numStr, 16, 64)
@@ -106,6 +111,7 @@ func hexToDec(hex string) (int, error) {
 	return int(num), nil
 }
 
+// getLatestBlock returns the number of the latest block
 func getLatestBlock() (int, error) {
 	data := RPCRequest{
 		Jsonrpc: "2.0",
@@ -123,10 +129,12 @@ func getLatestBlock() (int, error) {
 	return num, err
 }
 
+// decToHex converts a decimal number to hexadecimal
 func decToHex(dec int) string {
 	return fmt.Sprintf("0x%x", dec)
 }
 
+// getBlockByNumber returns the block with the given number
 func getBlockByNumber(number int) (Block, error) {
 	numberHex := decToHex(number)
 	data := RPCRequest{

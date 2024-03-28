@@ -11,6 +11,7 @@ type Blockchain struct {
 	Database     *Memory
 }
 
+// newBlockchain creates blockchain, reads the latest block, init the database, and starts listening for new blocks
 func newBlockchain() (Parser, error) {
 	b := &Blockchain{}
 
@@ -26,6 +27,7 @@ func newBlockchain() (Parser, error) {
 	return b, nil
 }
 
+// backgroundListening listens for new blocks each second
 func (b *Blockchain) backgroundListening() {
 	ticker := time.NewTicker(time.Second)
 
@@ -34,6 +36,7 @@ func (b *Blockchain) backgroundListening() {
 	}
 }
 
+// readBlocks reads all new blocks between the real lastest block and the in-memory latest block
 func (b *Blockchain) readBlocks() {
 	newLastBlockNum, err := getLatestBlock()
 	if err != nil {
@@ -54,6 +57,7 @@ func (b *Blockchain) readBlocks() {
 	b.LastBlockNum = newLastBlockNum
 }
 
+// addTransactionsFromBlock adds to the memory all transactions from the subscribed addresses in a block
 func (b *Blockchain) addTransactionsFromBlock(block Block) {
 	for _, tx := range block.Result.Transactions {
 		for _, subAddr := range b.Database.GetAllSubscribers() {
