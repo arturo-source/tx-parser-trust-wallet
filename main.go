@@ -29,6 +29,12 @@ func main() {
 		}
 	})
 
+	http.HandleFunc("/getTransactions", func(w http.ResponseWriter, r *http.Request) {
+		address := r.URL.Query().Get("address")
+		transactions := blockchain.GetTransactions(address)
+		w.Write([]byte(fmt.Sprintf("%v", transactions)))
+	})
+
 	if err := http.ListenAndServe(":"+*port, nil); err != nil {
 		fmt.Fprintf(os.Stderr, "Error starting server: %s\n", err)
 		os.Exit(1)

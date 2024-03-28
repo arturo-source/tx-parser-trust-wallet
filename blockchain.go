@@ -9,13 +9,13 @@ import (
 
 type Blockchain struct {
 	LastBlockNum int
-	Suscribers   map[string]bool
+	Suscribers   map[string][]Transaction
 }
 
-func newBlockchain() *Blockchain {
+func newBlockchain() Parser {
 	return &Blockchain{
 		LastBlockNum: 0,
-		Suscribers:   make(map[string]bool),
+		Suscribers:   make(map[string][]Transaction),
 	}
 }
 
@@ -54,6 +54,14 @@ func (b *Blockchain) Subscribe(address string) bool {
 		return false
 	}
 
-	b.Suscribers[address] = true
+	b.Suscribers[address] = []Transaction{}
 	return true
+}
+
+func (b *Blockchain) GetTransactions(address string) []Transaction {
+	if _, ok := b.Suscribers[address]; !ok {
+		fmt.Fprintf(os.Stderr, "Address %s not subscribed\n", address)
+	}
+
+	return b.Suscribers[address]
 }
