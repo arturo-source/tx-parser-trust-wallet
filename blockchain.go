@@ -8,7 +8,7 @@ import (
 
 type Blockchain struct {
 	LastBlockNum int
-	Subscribers  map[string][]Transaction
+	Subscribers  Memory
 }
 
 func newBlockchain() (Parser, error) {
@@ -20,7 +20,7 @@ func newBlockchain() (Parser, error) {
 	}
 
 	b.LastBlockNum = lastBlockNum
-	b.Subscribers = make(map[string][]Transaction)
+	b.Subscribers = NewMemory()
 	go b.backgroundListening()
 
 	return b, nil
@@ -56,10 +56,10 @@ func (b *Blockchain) readBlocks() {
 
 func (b *Blockchain) addTransactionsFromBlock(block Block) {
 	for _, tx := range block.Result.Transactions {
-		for sub := range b.Subscribers {
-			switch sub {
+		for _, subAddr := range b.Subscribers.GetAllSubscribers() {
+			switch subAddr {
 			case tx.From, tx.To:
-				b.Subscribers[sub] = append(b.Subscribers[sub], tx)
+				b.Subscribers.AddTransaction(subAddr, tx)
 			}
 		}
 	}
@@ -70,18 +70,18 @@ func (b *Blockchain) GetCurrentBlock() int {
 }
 
 func (b *Blockchain) Subscribe(address string) bool {
-	if _, ok := b.Subscribers[address]; ok {
+	if b.Subscribers.SubscriberExist(address) {
 		return false
 	}
 
-	b.Subscribers[address] = []Transaction{}
+	b.Subscribers.AddSubscriber(address)
 	return true
 }
 
 func (b *Blockchain) GetTransactions(address string) []Transaction {
-	if _, ok := b.Subscribers[address]; !ok {
+	if !b.Subscribers.SubscriberExist(address) {
 		fmt.Fprintf(os.Stderr, "Address %s not subscribed\n", address)
 	}
 
-	return b.Subscribers[address]
+	return b.Subscribers.GetSubscriberTransactions(address)
 }
