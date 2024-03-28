@@ -3,20 +3,18 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 )
 
 type Blockchain struct {
 	LastBlockNum int
-	Suscribers   map[string][]Transaction
+	Subscribers  map[string][]Transaction
 }
 
 func newBlockchain() Parser {
 	b := &Blockchain{
 		LastBlockNum: 0,
-		Suscribers:   make(map[string][]Transaction),
+		Subscribers:  make(map[string][]Transaction),
 	}
 
 	go b.backgroundListening()
@@ -32,66 +30,53 @@ func (b *Blockchain) backgroundListening() {
 }
 
 func (b *Blockchain) readBlocks() {
-	newLastBlockNum := b.GetCurrentBlock()
+	newLastBlockNum, err := getLatestBlock()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting latest block: %s\n", err)
+		return
+	}
 
-	for i := b.LastBlockNum + 1; i <= newLastBlockNum; i++ {
-		// get block
-		// add transactions
+	for blockNum := b.LastBlockNum + 1; blockNum <= newLastBlockNum; blockNum++ {
+		block, err := getBlockByNumber(blockNum)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting block: %s\n", err)
+			return
+		}
+
+		b.addTransactionsFromBlock(block)
 	}
 
 	b.LastBlockNum = newLastBlockNum
 }
 
-func (b *Blockchain) addTransactionsFromBlock(block RPCResponse) {
-	for tx := range block.Result.Transactions {
-		fmt.Println(tx)
-		// if one of the suscribed addresses is in the transaction
-		// append it
+func (b *Blockchain) addTransactionsFromBlock(block Block) {
+	for _, tx := range block.Result.Transactions {
+		for sub := range b.Subscribers {
+			switch sub {
+			case tx.From, tx.To:
+				b.Subscribers[sub] = append(b.Subscribers[sub], tx)
+			}
+		}
 	}
-}
-
-func hexToDec(hex string) int {
-	numStr := strings.TrimPrefix(hex, "0x")
-	num, err := strconv.ParseInt(numStr, 16, 64)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing number: %s\n", err)
-		return 0
-	}
-
-	return int(num)
 }
 
 func (b *Blockchain) GetCurrentBlock() int {
-	data := RPCRequest{
-		Jsonrpc: "2.0",
-		Method:  "eth_getBlockByNumber",
-		Params:  []any{"latest", false},
-		ID:      1,
-	}
-
-	respData, err := doRequest(data)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting block: %s\n", err)
-		return 0
-	}
-
-	num := hexToDec(respData.Result.Number)
-	return num
+	return b.LastBlockNum
 }
 
 func (b *Blockchain) Subscribe(address string) bool {
-	if _, ok := b.Suscribers[address]; ok {
+	if _, ok := b.Subscribers[address]; ok {
 		return false
 	}
 
-	b.Suscribers[address] = []Transaction{}
+	b.Subscribers[address] = []Transaction{}
 	return true
 }
 
 func (b *Blockchain) GetTransactions(address string) []Transaction {
-	if _, ok := b.Suscribers[address]; !ok {
+	if _, ok := b.Subscribers[address]; !ok {
 		fmt.Fprintf(os.Stderr, "Address %s not subscribed\n", address)
 	}
 
-	return b.Suscribers[address]
+	return b.Subscribers[address]
 }

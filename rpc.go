@@ -56,6 +56,17 @@ type Block struct {
 	ID int `json:"id"`
 }
 
+// https://ethereum.org/en/developers/docs/transactions/
+type Transaction struct {
+	From                 string `json:"from"`
+	To                   string `json:"to"`
+	GasLimit             string `json:"gasLimit"`
+	MaxFeePerGas         string `json:"maxFeePerGas"`
+	MaxPriorityFeePerGas string `json:"maxPriorityFeePerGas"`
+	Nonce                string `json:"nonce"`
+	Value                string `json:"value"`
+}
+
 func doRequest(data RPCRequest) (Block, error) {
 	var block Block
 
