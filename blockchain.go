@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Blockchain struct {
@@ -13,9 +14,39 @@ type Blockchain struct {
 }
 
 func newBlockchain() Parser {
-	return &Blockchain{
+	b := &Blockchain{
 		LastBlockNum: 0,
 		Suscribers:   make(map[string][]Transaction),
+	}
+
+	go b.backgroundListening()
+	return b
+}
+
+func (b *Blockchain) backgroundListening() {
+	ticker := time.NewTicker(time.Second)
+
+	for range ticker.C {
+		b.readBlocks()
+	}
+}
+
+func (b *Blockchain) readBlocks() {
+	newLastBlockNum := b.GetCurrentBlock()
+
+	for i := b.LastBlockNum + 1; i <= newLastBlockNum; i++ {
+		// get block
+		// add transactions
+	}
+
+	b.LastBlockNum = newLastBlockNum
+}
+
+func (b *Blockchain) addTransactionsFromBlock(block RPCResponse) {
+	for tx := range block.Result.Transactions {
+		fmt.Println(tx)
+		// if one of the suscribed addresses is in the transaction
+		// append it
 	}
 }
 
@@ -45,7 +76,6 @@ func (b *Blockchain) GetCurrentBlock() int {
 	}
 
 	num := hexToDec(respData.Result.Number)
-	b.LastBlockNum = num
 	return num
 }
 
