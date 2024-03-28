@@ -1,34 +1,36 @@
 package main
 
-type Memory map[string][]Transaction
-
-func NewMemory() Memory {
-	return make(Memory)
+type Memory struct {
+	data map[string][]Transaction
 }
 
-func (m Memory) AddSubscriber(address string) {
-	m[address] = []Transaction{}
+func NewMemory() *Memory {
+	return &Memory{data: make(map[string][]Transaction)}
 }
 
-func (m Memory) GetAllSubscribers() []string {
-	subscribers := make([]string, 0, len(m))
+func (m *Memory) AddSubscriber(address string) {
+	m.data[address] = []Transaction{}
+}
 
-	for address := range m {
+func (m *Memory) GetAllSubscribers() []string {
+	subscribers := make([]string, 0, len(m.data))
+
+	for address := range m.data {
 		subscribers = append(subscribers, address)
 	}
 
 	return subscribers
 }
 
-func (m Memory) SubscriberExist(address string) bool {
-	_, ok := m[address]
+func (m *Memory) SubscriberExist(address string) bool {
+	_, ok := m.data[address]
 	return ok
 }
 
-func (m Memory) AddTransaction(address string, transaction Transaction) {
-	m[address] = append(m[address], transaction)
+func (m *Memory) AddTransaction(address string, transaction Transaction) {
+	m.data[address] = append(m.data[address], transaction)
 }
 
-func (m Memory) GetSubscriberTransactions(address string) []Transaction {
-	return m[address]
+func (m *Memory) GetSubscriberTransactions(address string) []Transaction {
+	return m.data[address]
 }
